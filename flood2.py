@@ -9,21 +9,16 @@ import queue
 from colorama import init, Fore
 
 # --- Konfigurasi Logging ---
-# Konfigurasi logging harus dilakukan sekali, bisa di awal atau di dalam if __name__
+
 LOG_FILENAME = 'attack_log.txt'
 logging.basicConfig(filename=LOG_FILENAME, level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 # --- Banner ---
-# Banner sebaiknya didefinisikan di sini, tapi dicetak hanya sekali di __main__
 BANNER = Fore.CYAN + r"""
-KUMPULAN PARA MENTOR MODUS DUIT
-____   ___   ___              _     
-|___ \ / _ \ / _ \   _ __ ___ | |__  
-  __) | | | | | | | | '_ ` _ \| '_ \ 
- / __/| |_| | |_| | | | | | | | |_) |
-|_____|\___/ \___/  |_| |_| |_|_.__/ 
-  ADAKAH SERATUS BUAT BELI DATA ??                                   
+░█░█░█▀█░▄▀▄░░░█▀▀░█░░░█▀█░█▀█░█▀▄░█▀▀░█▀▄
+░█▀█░█▀█░█\█░░░█▀▀░█░░░█░█░█░█░█░█░█▀▀░█▀▄
+░▀░▀░▀░▀░░▀\░░░▀░░░▀▀▀░▀▀▀░▀▀▀░▀▀░░▀▀▀░▀░▀                                   
 """
 
 # --- User Agents ---
@@ -406,16 +401,16 @@ if __name__ == "__main__":
     print(Fore.CYAN + "-"*60)
     
     print(BANNER) # Banner dicetak hanya di sini
-    print("\n" + Fore.CYAN + "-"*60)
+    print("\n" + Fore.CYAN + "-"*30)
     
-    print(f"{Fore.YELLOW}!!! PERINGATAN !!!{Fore.RESET}")
-    print(f"{Fore.YELLOW}Script ini adalah alat PENGUJIAN KEAMANAN yang kuat.{Fore.RESET}")
-    print(f"{Fore.YELLOW}Gunakan HANYA pada sistem yang Anda miliki atau memiliki izin TERTULIS.{Fore.RESET}")
-    print(f"{Fore.YELLOW}Penggunaan ILEGAL berakibat pada HUKUMAN PIDANA.{Fore.RESET}")
+    print(f"{Fore.YELLOW} !!! PERINGATAN PEMERINTAH...!!!{Fore.RESET}")
+    print(f"{Fore.YELLOW} MEROKOK DAPAT MENYEBABKAN KANKER, SERANGAN JANTUNG{Fore.RESET}")
+    print(f"{Fore.YELLOW} IMPOTENSI, GANGGUAN KEHAMILAN DAN JANIN{Fore.RESET}")
+    print(f"{Fore.YELLOW} MAKA DARI ITU, JANGAN DENGAR KATA PEMERINTAH...{Fore.RESET}")
     print(f"{Fore.RED}Tekan CTRL+C dalam 5 detik untuk membatalkan...{Fore.RESET}")
     
     try:
-        time.sleep(5) # Jeda sebelum memulai parsing argumen
+        time.sleep(5) 
         
         # Parsing argumen command line
         if len(sys.argv) < 7: 
