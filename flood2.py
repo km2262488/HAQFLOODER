@@ -16,9 +16,13 @@ logging.basicConfig(filename=LOG_FILENAME, level=logging.INFO,
 
 # --- Banner ---
 BANNER = Fore.CYAN + r"""
-░█░█░█▀█░▄▀▄░░░█▀▀░█░░░█▀█░█▀█░█▀▄░█▀▀░█▀▄
-░█▀█░█▀█░█\█░░░█▀▀░█░░░█░█░█░█░█░█░█▀▀░█▀▄
-░▀░▀░▀░▀░░▀\░░░▀░░░▀▀▀░▀▀▀░▀▀▀░▀▀░░▀▀▀░▀░▀                                   
+KUMPULAN PARA MENTOR MODUS DUIT
+____   ___   ___              _     
+|___ \ / _ \ / _ \   _ __ ___ | |__  
+  __) | | | | | | | | '_ ` _ \| '_ \ 
+ / __/| |_| | |_| | | | | | | | |_) |
+|_____|\___/ \___/  |_| |_| |_|_.__/ 
+  ADAKAH SERATUS BUAT BELI DATA ??                                   
 """
 
 # --- User Agents ---
@@ -360,10 +364,10 @@ class AttackManager:
     # --- Main Control Methods ---
     def start(self):
         print(BANNER)
-        print(f"{Fore.YELLOW}!!! PERINGATAN PEMERINTAH !!!{Fore.RESET}")
-        print(f"{Fore.YELLOW}MEROKOK DAPAT MENYEBABKAN KANKER, SERANGAN JANTUNG{Fore.RESET}")
-        print(f"{Fore.YELLOW}IMPOTENSI, GANGGUAN KEHAMILAN DAN JANIN{Fore.RESET}")
-        print(f"{Fore.YELLOW}TAPI GA USAH DENGAR APA KATA PEMERINTAH{Fore.RESET}")
+        print(f"{Fore.YELLOW}!!! PERINGATAN !!!{Fore.RESET}")
+        print(f"{Fore.YELLOW}Script ini adalah alat PENGUJIAN KEAMANAN yang kuat.{Fore.RESET}")
+        print(f"{Fore.YELLOW}Gunakan HANYA pada sistem yang Anda miliki atau memiliki izin TERTULIS.{Fore.RESET}")
+        print(f"{Fore.YELLOW}Penggunaan ILEGAL berakibat pada HUKUMAN PIDANA.{Fore.RESET}")
         print(f"{Fore.RED}Tekan CTRL+C dalam 5 detik untuk membatalkan...{Fore.RESET}")
         
         try:
