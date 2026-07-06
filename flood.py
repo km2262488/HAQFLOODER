@@ -126,7 +126,7 @@ def http_attack_advanced(target, port, method='GET', mode='normal', num_sockets=
 
     sel = selectors.DefaultSelector()
     
-    start_time = time.time().
+    start_time = time.time()
 
     def open_connection():
         global active_connections
