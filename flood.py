@@ -12,13 +12,9 @@ init()
 
 # --- Banner ---
 BANNER = Fore.CYAN + r"""
-██╗  ██╗ █████╗  ██████╗     ███████╗██╗      ██████╗  ██████╗ ██████╗ ███████╗██████╗ 
-██║  ██║██╔══██╗██╔═══██╗    ██╔════╝██║     ██╔═══██╗██╔═══██╗██╔══██╗██╔════╝██╔══██╗
-███████║███████║██║   ██║    █████╗  ██║     ██║   ██║██║   ██║██║  ██║█████╗  ██████╔╝
-██╔══██║██╔══██║██║▄▄ ██║    ██╔══╝  ██║     ██║   ██║██║   ██║██║  ██║██╔══╝  ██╔══██╗
-██║  ██║██║  ██║╚██████╔╝    ██║     ███████╗╚██████╔╝╚██████╔╝██████╔╝███████╗██║  ██║
-╚═╝  ╚═╝╚═╝  ╚═╝ ╚══▀▀═╝     ╚═╝     ╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝
-                                                                                                                          
+░█░█░█▀█░▄▀▄░░░█▀▀░█░░░█▀█░█▀█░█▀▄░█▀▀░█▀▄
+░█▀█░█▀█░█\█░░░█▀▀░█░░░█░█░█░█░█░█░█▀▀░█▀▄
+░▀░▀░▀░▀░░▀\░░░▀░░░▀▀▀░▀▀▀░▀▀▀░▀▀░░▀▀▀░▀░▀
 """
 print(BANNER)
 
@@ -130,7 +126,7 @@ def http_attack_advanced(target, port, method='GET', mode='normal', num_sockets=
 
     sel = selectors.DefaultSelector()
     
-    start_time = time.time() # Catat waktu mulai untuk thread ini
+    start_time = time.time().
 
     def open_connection():
         global active_connections
@@ -178,7 +174,7 @@ def http_attack_advanced(target, port, method='GET', mode='normal', num_sockets=
         # --- Periksa durasi serangan untuk thread ini ---
         if attack_duration is not None and (time.time() - start_time) > attack_duration:
             # logging.info(f"Attack duration reached for {target}:{port}. Stopping thread.") # Dihapus
-            break # Keluar dari loop thread jika durasi tercapai
+            break 
 
         if active_connections < num_sockets:
             open_connection()
@@ -328,16 +324,16 @@ def stats_display(stop_event, target_ip):
 
 # --- Main Execution ---
 if __name__ == "__main__":
-    print(f"{Fore.YELLOW}!!! PERINGATAN !!!{Fore.RESET}")
-    print(f"{Fore.YELLOW}Script ini adalah alat PENGUJIAN KEAMANAN yang kuat.{Fore.RESET}")
-    print(f"{Fore.YELLOW}Gunakan HANYA pada sistem yang Anda miliki atau memiliki izin TERTULIS.{Fore.RESET}")
-    print(f"{Fore.YELLOW}Penggunaan ILEGAL berakibat pada HUKUMAN PIDANA.{Fore.RESET}")
+    print(f"{Fore.YELLOW}PERINGATAN PEMERINTAH{Fore.RESET}")
+    print(f"{Fore.YELLOW}MEROKOK DAPAT MENYEBABKAN SERANGAN JANTUNG{Fore.RESET}")
+    print(f"{Fore.YELLOW}IMPOTENSI, GANGGUAN KEHAMILAN DAN JANIN.{Fore.RESET}")
+    print(f"{Fore.YELLOW}MAKA DARI ITU JANGAN DENGAR APA KATA PEMERINTAH{Fore.RESET}")
     print(f"{Fore.RED}Tekan CTRL+C dalam 5 detik untuk membatalkan...{Fore.RESET}")
     
     try:
         time.sleep(5)
+       
         
-        # Perubahan: argumen sekarang <TARGET_IP> <PORT> <THREADS_PER_PORT> <ATTACK_TYPE> <MODE> <DURATION_SEC> [HTTP_METHOD]
         if len(sys.argv) < 7: 
             print(f"\nUsage: python3 {sys.argv[0]} <TARGET_IP> <PORT> <THREADS_PER_PORT> <ATTACK_TYPE> <MODE> <DURATION_SEC> [HTTP_METHOD]")
             print("DURATION_SEC: Attack duration in seconds (e.g., 60 for 1 minute, 0 for unlimited)")
