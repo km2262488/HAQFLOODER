@@ -50,5 +50,5 @@ Jalankan script dari direktori tempat Anda menyimpannya menggunakan `python` di 
 **Sintaks Dasar:**
 
 ```bash
-python flooder.py <TARGET_IP> <TARGET_PORT> <THREADS> <ATTACK_TYPE> [HTTP_METHOD]
+python flood.py <TARGET_IP> <TARGET_PORT> <THREADS> <ATTACK_TYPE> [HTTP_METHOD]
 
